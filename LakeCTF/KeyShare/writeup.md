@@ -56,7 +56,7 @@ Ok, so our elliptic curve's order breaks down into lots of primes, some of them 
 
 It turns out that elliptic curve groups are *cyclic*. What this means is that we can take any factor `k` of the elliptic curve's order, and easily create an element that is of that order. How do we do this?
 
-Let's say we want to make an element that is of order 41 in this case (since 41 is a factor of the elliptic curve's order). We start by finding the "generator" element, which is the point in the group that is the same order as the elliptic curve itself (since elliptic curves are cyclic). Call this element `g`.
+Let's say we want to make an element that is of order 41 in this case (since 41 is a factor of the elliptic curve's order). We start by finding the "generator" element, which is the point in the group that is the same order as the elliptic curve itself (since elliptic curves are cyclic, this generator element with order equal to the order of the group is guaranteed to exist). Call this element `g`.
 
 ```python
 g = ec1.gen(0)
