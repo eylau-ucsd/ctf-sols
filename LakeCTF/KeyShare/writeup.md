@@ -2,7 +2,9 @@
 
 So basically in keyshare we are given an "oracle".
 
-The oracle starts by giving us `sk * P`, where `sk` is the secret key (an integer inside `GF(p)`) and `P` which encodes the flag we want to obtain. Then the oracle gives us 4 queries, in each query we can give it some point `P_k` and it will give us back the value `sk * P_k`. From this premise, it's obvious that we want to solve for `sk` somehow. But the `P`'s aren't integers - they're point on an elliptic curve (and thru another lens, a group element)! How do we solve this?
+The oracle starts by giving us `sk * P`, where `sk` is the secret key (an integer inside `GF(p)`) and `P` which encodes the flag we want to obtain. Then the oracle gives us 4 queries, in each query we can give it some point `P_k` and it will give us back the value `sk * P_k`. Our goal is to find `P`.
+
+From this premise, it's obvious that we want to solve for `sk` somehow, and then "reverse" the multiplication of `sk` and `P`. But the `P`'s aren't integers - they're point on an elliptic curve (and thru another lens, a group element)! How do we solve this?
 
 Normally this wouldn't be breakable on a correct implementation. However, there is one flaw to the implementation - the server doesn't actually check whether the point you query to the oracle, is actually a point on the curve or not. This gives rise to something called the *invalid curve attack*.
 
@@ -92,7 +94,7 @@ h.discrete_log(ec1(5635179974324270472443083216586044009757535113080991395791, 3
 
 You may be asking: but wait, the original private key `sk` wasn't limited between `0` to `40`. So what does this `13` even represent?
 
-Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = 0`, `10*0 = 0` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `sk * h`, it is equal to `(sk mod 41) * h`, where 41 is the order of `h`,= and `sk mod 41` is the remainder when `sk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `sk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `sk` is congruent to 13 modulo 41.
+Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = 0`, `10*0 = 0` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `sk * h`, it is equal to `(sk mod 41) * h`, where 41 is the order of `h`, and `sk mod 41` is the remainder when `sk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `sk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `sk` is congruent to 13 modulo 41.
 
 So we know what `sk` is modulo 41. Now what?
 
@@ -113,5 +115,15 @@ Remember, our server only gives us a total of four queries - it only lets us kno
 So we need a kind of balance in the middle. We know that the order of the whole elliptic curve is ~2^192, so for `p_1 * p_2 * p_3 * p_4` to exceed/equal/be close to that number we will need `2^(192/4) = 2^48`. The time complexity of doing discrete log is roughly `2^24` which is nearing towards the "long" end of computing times, but is still feasible for our purposes.
 
 But how do we find curves which contain appropriately-sized prime factors in its order? It turns out they're not *too* hard to find statistically; we can just do it by picking `B` at random and collecting curves that way.
+
+## Okay, now I have the secret key - now what about the flag?
+
+So far, we have explained how to find `sk`. But the ultimate goal of the problem is to recover `P` (the flag is encoded inside this point), where we are given `sk * P`. So how do we "undo" this multiplication after we know what `sk` is?
+
+Recall that `n * P` is the same thing as `(n mod P.order()) * P`. If we find some `dk` such that `(sk * dk) mod P.order() = 1`, then when we multiply `sk * P` by `dk` we will get `dk * (sk * P) = (dk * sk) * P = 1 * P = P` (remember, multiplication in elliptic curve groups is associative). This is known as the multiplicative modular inverse. Fortunately, there exists a very fast algorithm which runs in time `O(log(m)^2)` where `m` is the order of the group called the extended Euclidean algorithm. Fun fact: this modular inverse idea is also how private/public key pairs are generated in RSA!
+
+Note that, since P-192 is a group with a prime order, that means every single element (except for the "zero" element) is a generator (take a modern algebra course if you want to understand why this is the case), meaning that `P.order()` is just the order of the group.
+
+So all we need to do is find the multiplicative inverse of `sk` modulo `P.order()`, call this inverse `dk`, and then multiply `dk` by `sk * P` to give us back `P`. And then we're done!
 
 The code showing the mechanical details behind the solve can be found in the same directory, under the file `keyshare.ipynb`.
