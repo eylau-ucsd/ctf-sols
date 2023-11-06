@@ -64,14 +64,14 @@ g
 # (4430368525472652806609907369979345217241746908779747524865 : 3821373115362966372979773553603028631411882966194022219681 : 1)
 ```
 
-`g` has the same order as the order of the group, meaning that if we multiply `ec1.order() * g` we will get back the identity element `(0, 1)` (which is the identity, in the sense that `(0, 1) + P = P` for any point `P` inside the group - think of it as the "zero" element), and that `ec1.order()` really is the smallest number larger than 0 that will get you `(0, 1)` when multiplied by `P`:
+`g` has the same order as the order of the group, meaning that if we multiply `ec1.order() * g` we will get back the identity element `0` (which is the identity, in the sense that `0 + P = P` for any point `P` inside the group - think of it as the "zero" element), and that `ec1.order()` really is the smallest number larger than 0 that will get you `0` when multiplied by `P`:
 
 ```python
 g * ec1.order()
 # (0 : 1 : 0)
 ```
 
-What happens if we multiply `g` by all the factors of the order of the curve, except 41? We will get `8123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g` - call this `h`. It turns out that point multiplication for elliptic curves is associative - so `41 * h = 41 * 123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g = ec1.order() * g = (0, 1)`. So then `h` has order `41`:
+What happens if we multiply `g` by all the factors of the order of the curve, except 41? We will get `8123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g` - call this `h`. It turns out that point multiplication for elliptic curves is associative - so `41 * h = 41 * 123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g = ec1.order() * g = 0`. So then `h` has order `41`:
 
 ```python
 h = (ec1.order() / 41) * g
@@ -90,7 +90,7 @@ h.discrete_log(ec1(5635179974324270472443083216586044009757535113080991395791, 3
 
 You may be asking: but wait, the original private key `sk` wasn't limited between `0` to `40`. So what does this `13` even represent?
 
-Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = (0, 1)`, `10*(0, 1) = (0, 1)` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `sk * h`, it is equal to `(sk mod 41) * h`, where 41 is the order of `h`,= and `sk mod 41` is the remainder when `sk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `sk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `sk` is congruent to 13 modulo 41.
+Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = 0`, `10*0 = 0` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `sk * h`, it is equal to `(sk mod 41) * h`, where 41 is the order of `h`,= and `sk mod 41` is the remainder when `sk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `sk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `sk` is congruent to 13 modulo 41.
 
 So we know what `sk` is modulo 41. Now what?
 
