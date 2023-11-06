@@ -64,12 +64,14 @@ g
 # (4430368525472652806609907369979345217241746908779747524865 : 3821373115362966372979773553603028631411882966194022219681 : 1)
 ```
 
-`g` has the same order as the order of the group, meaning that if we multiply `ec1.order() * g` we will get back the identity element `0` (which is the identity, in the sense that `0 + P = P` for any point `P` inside the group - think of it as the "zero" element), and that `ec1.order()` really is the smallest number larger than 0 that will get you `0` when multiplied by `P`:
+`g` has the same order as the order of the group, meaning that if we multiply `ec1.order() * g` we will get back the identity element `0`, and that `ec1.order()` really is the smallest number larger than 0 that will get you `0` when multiplied by `P`:
 
 ```python
 g * ec1.order()
 # (0 : 1 : 0)
 ```
+
+*addendum: the `0` point isn't actually `(0, 0)`. It's the `0` element in the sense that, `0 + P = P` in terms of the elliptic curve point arithmetic, for any point on the elliptic curve. The point is known as the "point at infinity" and is represented in SageMath as `(0 : 1 : 0)` as seen above.*
 
 What happens if we multiply `g` by all the factors of the order of the curve, except 41? We will get `8123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g` - call this `h`. It turns out that point multiplication for elliptic curves is associative - so `41 * h = 41 * 123 * 586213 * 7066373093489 * 951465252363947 * 4782047835442779533 * g = ec1.order() * g = 0`. So then `h` has order `41`:
 
