@@ -81,24 +81,24 @@ h.order()
 # 41
 ```
 
-Let's say I give you the resulting point after doing the multiplication `pk * h = (5635179974324270472443083216586044009757535113080991395791, 352816356956857592460233017294015823975016302494379984529)`. Now, since the possible candidates for `pk` are small (only `0` to `40`), calculating the discrete log will be instant on a computer:
+Let's say I give you the resulting point after doing the multiplication `sk * h = (5635179974324270472443083216586044009757535113080991395791, 352816356956857592460233017294015823975016302494379984529)`. Now, since the possible candidates for `sk` are small (only `0` to `40`), calculating the discrete log will be instant on a computer:
 
 ```python
 h.discrete_log(ec1(5635179974324270472443083216586044009757535113080991395791, 352816356956857592460233017294015823975016302494379984529))
 # 13
 ```
 
-You may be asking: but wait, the original private key `pk` wasn't limited between `0` to `40`. So what does this `13` even represent?
+You may be asking: but wait, the original private key `sk` wasn't limited between `0` to `40`. So what does this `13` even represent?
 
-Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = (0, 1)`, `10*(0, 1) = (0, 1)` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `pk * h`, it is equal to `(pk mod 41) * h`, where 41 is the order of `h`,= and `pk mod 41` is the remainder when `pk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `pk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `pk` is congruent to 13 modulo 41.
+Think about it this way. When we calculate, say, `423 * h`, where `h` is the point we talked about, we can break it down as `423 * h = (10*42 + 13) * h = 10*42*h + 13*h`. Since `42*h = (0, 1)`, `10*(0, 1) = (0, 1)` so we can just ignore that (since it is basically the "zero" of the group). So we see that `423 * h = 13 * h`. So when we multiply `sk * h`, it is equal to `(sk mod 41) * h`, where 41 is the order of `h`,= and `sk mod 41` is the remainder when `sk` is divided by `41`. So in our case, the `13` we get from solving the discrete log means that `sk` when divided by 41 leaves a remainder of 13; or in other terms, we now know that `sk` is congruent to 13 modulo 41.
 
-So we know what `pk` is modulo 41. Now what?
+So we know what `sk` is modulo 41. Now what?
 
 ## Chinese Remainder Theorem
 
-It turns out, if we know what `pk` is congruent to modulo a bunch of different primes `p_1, p_2, ..., p_n`, we can figure out what `pk` is congruent to modulo `p_1 * p_2 * ... * p_n`. If the product of those primes are bigger than the upper bound on `pk` (i.e. the order of the 192-P elliptic curve), then we will know what the value of `pk` is straight up.
+It turns out, if we know what `sk` is congruent to modulo a bunch of different primes `p_1, p_2, ..., p_n`, we can figure out what `sk` is congruent to modulo `p_1 * p_2 * ... * p_n`. If the product of those primes are bigger than the upper bound on `sk` (i.e. the order of the 192-P elliptic curve), then we will know what the value of `sk` is straight up.
 
-So what this means is that we can repeat the above process for different curves with different orders. Keep looking for curves, factorize their order, find a "relatively small" prime factor `p_i` in the curve order, find an element `h` of that prime factor order, give it to the server so the server will give us `pk * h`, then perform discrete log to figure out what `pk` is congruent to modulo `p_i`. Eventually, if we collect enough modular congruences for `pk`, the product of the primes `p_1 * p_2 * ... * p_n` will be large enough for us to reconstruct `pk` directly.
+So what this means is that we can repeat the above process for different curves with different orders. Keep looking for curves, factorize their order, find a "relatively small" prime factor `p_i` in the curve order, find an element `h` of that prime factor order, give it to the server so the server will give us `sk * h`, then perform discrete log to figure out what `sk` is congruent to modulo `p_i`. Eventually, if we collect enough modular congruences for `sk`, the product of the primes `p_1 * p_2 * ... * p_n` will be large enough for us to reconstruct `sk` directly.
 
 Luckily for us sagemath has an aptly named `crt` function that will solve these systems of modular congruences for us.
 
@@ -106,7 +106,7 @@ Luckily for us sagemath has an aptly named `crt` function that will solve these 
 
 There's a question though: how big should our primes be for the modular congruences?
 
-Remember, our server only gives us a total of four queries - it only lets us know `pk * h` for 4 different `h`'s. If we pick the order of our `h`'s to be too small, then the product of the `h`'s orders `p_1 * p_2 * p_3 * p_4` will be so small that it will not let us reconstruct `pk` (or at least narrow down the number of possible `pk` candidates to a small amount). If we pick the order of our `h`'s to be too big, we will be able to reconstruct `pk`, but the problem will be that performing the discrete log for each individual `pk * h` will take too long.
+Remember, our server only gives us a total of four queries - it only lets us know `sk * h` for 4 different `h`'s. If we pick the order of our `h`'s to be too small, then the product of the `h`'s orders `p_1 * p_2 * p_3 * p_4` will be so small that it will not let us reconstruct `sk` (or at least narrow down the number of possible `sk` candidates to a small amount). If we pick the order of our `h`'s to be too big, we will be able to reconstruct `sk`, but the problem will be that performing the discrete log for each individual `sk * h` will take too long.
 
 So we need a kind of balance in the middle. We know that the order of the whole elliptic curve is ~2^192, so for `p_1 * p_2 * p_3 * p_4` to exceed/equal/be close to that number we will need `2^(192/4) = 2^48`. The time complexity of doing discrete log is roughly `2^24` which is nearing towards the "long" end of computing times, but is still feasible for our purposes.
 
